@@ -2,6 +2,117 @@
 {% block title %}View Products — Inventory Control System{% endblock %}
 
 {% block content %}
+<style>
+  .filter-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .filter-modal.active {
+    display: flex;
+  }
+
+  .filter-panel {
+    background: var(--bg2);
+    border-radius: var(--radius);
+    padding: 2rem;
+    max-width: 700px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .filter-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .filter-header h2 {
+    font-family: var(--font-head);
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .filter-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--text-muted);
+    padding: 0;
+  }
+
+  .filter-category {
+    margin-bottom: 2rem;
+  }
+
+  .filter-category-title {
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: .8rem;
+  }
+
+  .filter-options {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+  }
+
+  .filter-option {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+  }
+
+  .filter-option input[type="checkbox"],
+  .filter-option input[type="radio"] {
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+    accent-color: var(--accent);
+  }
+
+  .filter-option label {
+    flex: 1;
+    margin: 0;
+    font-size: .85rem;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: normal;
+    color: var(--text);
+    cursor: pointer;
+  }
+
+  .filter-actions {
+    display: flex;
+    gap: .75rem;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .filter-actions button {
+    flex: 1;
+  }
+</style>
+
 <div class="page-header">
   <h1>Product Inventory</h1></div>
 
@@ -10,20 +121,103 @@
   <div class="card-title">All Products</div>
 
   <div class="search-row">
-    <form method="GET" action="{{ url_for('view_products') }}" style="display:flex;gap:.6rem;flex:1;">
+    <form id="searchForm" method="GET" action="{{ url_for('view_products') }}" style="display:flex;gap:.6rem;flex:1;">
       <div class="search-wrap">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
         </svg>
         <input type="text" name="q" value="{{ search }}" placeholder="Search by product name…" />
       </div>
-      <button type="submit" class="btn btn-ghost btn-sm">Search</button>
-      {% if search %}
-        <a href="{{ url_for('view_products') }}" class="btn btn-ghost btn-sm">✕ Clear</a>
-      {% endif %}
     </form>
+    
+    <button type="button" class="btn btn-ghost btn-sm" onclick="toggleFilterModal()">⚙ Filters</button>
+    {% if search or low_stock or price_sort or qty_sort %}
+      <a href="{{ url_for('view_products') }}" class="btn btn-ghost btn-sm">✕ Clear</a>
+    {% endif %}
     <a href="{{ url_for('add_product') }}" class="btn btn-primary btn-sm">➕ Add Product</a>
   </div>
+
+  <!-- Filter Modal -->
+  <div id="filterModal" class="filter-modal">
+    <div class="filter-panel">
+      <div class="filter-header">
+        <h2>Search Filters</h2>
+        <button type="button" class="filter-close" onclick="toggleFilterModal()">✕</button>
+      </div>
+
+      <form id="filterForm" method="GET" action="{{ url_for('view_products') }}">
+        <!-- Keep search query -->
+        <input type="hidden" name="q" value="{{ search }}">
+
+        <!-- STOCK STATUS -->
+        <div class="filter-category">
+          <div class="filter-category-title">Stock Status</div>
+          <div class="filter-options">
+            <div class="filter-option">
+              <input type="checkbox" id="lowStock" name="low_stock" value="on" {% if low_stock %}checked{% endif %}>
+              <label for="lowStock">Low Stock (≤15 items)</label>
+            </div>
+          </div>
+        </div>
+
+        <!-- PRICE SORTING -->
+        <div class="filter-category">
+          <div class="filter-category-title">Price Sorting</div>
+          <div class="filter-options">
+            <div class="filter-option">
+              <input type="radio" id="priceDefault" name="price_sort" value="" {% if not price_sort %}checked{% endif %}>
+              <label for="priceDefault">Default</label>
+            </div>
+            <div class="filter-option">
+              <input type="radio" id="priceHighLow" name="price_sort" value="high_to_low" {% if price_sort == 'high_to_low' %}checked{% endif %}>
+              <label for="priceHighLow">High to Low</label>
+            </div>
+            <div class="filter-option">
+              <input type="radio" id="priceLowHigh" name="price_sort" value="low_to_high" {% if price_sort == 'low_to_high' %}checked{% endif %}>
+              <label for="priceLowHigh">Low to High</label>
+            </div>
+          </div>
+        </div>
+
+        <!-- QUANTITY SORTING -->
+        <div class="filter-category">
+          <div class="filter-category-title">Quantity Sorting</div>
+          <div class="filter-options">
+            <div class="filter-option">
+              <input type="radio" id="qtyDefault" name="qty_sort" value="" {% if not qty_sort %}checked{% endif %}>
+              <label for="qtyDefault">Default</label>
+            </div>
+            <div class="filter-option">
+              <input type="radio" id="qtyHighLow" name="qty_sort" value="high_to_low" {% if qty_sort == 'high_to_low' %}checked{% endif %}>
+              <label for="qtyHighLow">High to Low</label>
+            </div>
+            <div class="filter-option">
+              <input type="radio" id="qtyLowHigh" name="qty_sort" value="low_to_high" {% if qty_sort == 'low_to_high' %}checked{% endif %}>
+              <label for="qtyLowHigh">Low to High</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="filter-actions">
+          <button type="submit" class="btn btn-primary">Apply Filters</button>
+          <a href="{{ url_for('view_products') }}" class="btn btn-ghost" style="text-align:center;text-decoration:none;">Clear All</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function toggleFilterModal() {
+      const modal = document.getElementById('filterModal');
+      modal.classList.toggle('active');
+    }
+
+    document.getElementById('filterModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        this.classList.remove('active');
+      }
+    });
+  </script>
 
   {% if products %}
   <div class="table-wrap">
@@ -74,13 +268,14 @@
   <p style="font-size:.72rem;color:var(--text-muted);margin-top:1rem;">
     Showing {{ products|length }} record{% if products|length != 1 %}s{% endif %}
     {% if search %} matching "<strong style="color:var(--text-dim)">{{ search }}</strong>"{% endif %}
+    {% if low_stock %} with <strong style="color:var(--text-dim)">low stock</strong>{% endif %}
   </p>
 
   {% else %}
   <div class="empty-state">
     <h3>No products found</h3>
-    {% if search %}
-      <p>No results for "{{ search }}". <a href="{{ url_for('view_products') }}" style="color:var(--accent)">Clear search</a></p>
+    {% if search or low_stock or price_sort or qty_sort %}
+      <p>No results matching your filters. <a href="{{ url_for('view_products') }}" style="color:var(--accent)">Clear filters</a></p>
     {% else %}
       <p><a href="{{ url_for('add_product') }}" style="color:var(--accent)">Add your first product →</a></p>
     {% endif %}
