@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}Inventory Control System{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+
+{% if session.user %}
+<nav>
+  <a href="{{ url_for('index') }}" class="nav-brand">
+    <span class="brand-dot"></span>
+    <span>Inventory Control System</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="{{ url_for('index') }}"         {% if request.endpoint=='index'         %}class="active"{% endif %}>Dashboard</a></li>
+    <li><a href="{{ url_for('add_product') }}"   {% if request.endpoint=='add_product'   %}class="active"{% endif %}>Add Product</a></li>
+    <li><a href="{{ url_for('view_products') }}" {% if request.endpoint=='view_products' %}class="active"{% endif %}>View Products</a></li>
+  </ul>
+  <div class="nav-user">
+    <span class="user-badge">👤 {{ session.user }}</span>
+    <a href="{{ url_for('logout') }}" class="btn btn-sm btn-ghost">Logout</a>
+  </div>
+</nav>
+{% endif %}
+
+<main class="page-wrapper">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <ul class="flash-list">
+        {% for cat, msg in messages %}
+          <li class="flash flash-{{ cat }}">
+            {% if cat == 'success' %}✔{% else %}✖{% endif %}
+            {{ msg }}
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  {% endwith %}
+
+  {% block content %}{% endblock %}
+</main>
+
+{% if session.user %}
+<footer>
+  Inventory Control System
+</footer>
+{% endif %}
+
+</body>
+</html>

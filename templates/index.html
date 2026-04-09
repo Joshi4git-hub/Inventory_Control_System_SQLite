@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Inventory Control System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Dashboard</h1>
+  <p>Real-time overview of your inventory.</p>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-label">Total Products</div>
+    <div class="stat-value">{{ total_products }}</div>
+    <div class="stat-icon">📦</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Total Units</div>
+    <div class="stat-value">{{ total_quantity }}</div>
+    <div class="stat-icon">🗄️</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Low Stock Items</div>
+    <div class="stat-value" style="color:var(--warn)">{{ low_stock|length }}</div>
+    <div class="stat-icon">⚠️</div>
+  </div>
+</div>
+
+<div class="home-grid">
+  <div class="card">
+    <div class="card-title">Recent Additions</div>
+    {% if recent %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Product</th><th>Qty</th><th>Price</th></tr>
+        </thead>
+        <tbody>
+          {% for p in recent %}
+          <tr>
+            <td class="name-cell">{{ p.name }}</td>
+            <td>
+              <span class="badge {% if p.quantity >= 20 %}badge-ok{% elif p.quantity >= 10 %}badge-warn{% else %}badge-low{% endif %}">
+                {{ p.quantity }}
+              </span>
+            </td>
+            <td class="price-cell">₹{{ "{:,.2f}".format(p.price) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <h3>No products yet</h3>
+      <p>Add your first product to get started.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:1.2rem;">
+    <div class="card">
+      <div class="card-title">Quick Actions</div>
+      <div class="quick-actions">
+        <a href="{{ url_for('add_product') }}"   class="action-btn"><span class="icon">➕</span>Add Product</a>
+        <a href="{{ url_for('view_products') }}" class="action-btn"><span class="icon">📋</span>View All</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">⚠ Low Stock Alert</div>
+      {% if low_stock %}
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Product</th><th>Qty</th><th>Supplier</th></tr></thead>
+          <tbody>
+            {% for p in low_stock %}
+            <tr>
+              <td class="name-cell">{{ p.name }}</td>
+              <td><span class="badge badge-low">{{ p.quantity }}</span></td>
+              <td>{{ p.supplier }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <p style="color:var(--accent2);font-size:.82rem;">✔ All items are sufficiently stocked.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
