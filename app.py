@@ -247,21 +247,46 @@ def add_product():
 def view_products():
     user_id = session["user_id"]
     search  = request.args.get("q", "").strip()
-    conn    = get_db()
+    low_stock = request.args.get("low_stock", "").strip().lower() == "on"
+    price_sort = request.args.get("price_sort", "").strip()
+    qty_sort = request.args.get("qty_sort", "").strip()
+    
+    conn = get_db()
+
+    # Build query
+    query = "SELECT * FROM products WHERE user_id = ?"
+    params = [user_id]
 
     if search:
-        products = conn.execute(
-            "SELECT * FROM products WHERE user_id = ? AND name LIKE ?",
-            (user_id, f"%{search}%")
-        ).fetchall()
-    else:
-        products = conn.execute(
-            "SELECT * FROM products WHERE user_id = ?",
-            (user_id,)
-        ).fetchall()
+        query += " AND name LIKE ?"
+        params.append(f"%{search}%")
+
+    if low_stock:
+        query += " AND quantity <= 15"
+
+    # Add sorting
+    order_by = "name ASC"
+    if price_sort == "high_to_low":
+        order_by = "price DESC"
+    elif price_sort == "low_to_high":
+        order_by = "price ASC"
+    elif qty_sort == "high_to_low":
+        order_by = "quantity DESC"
+    elif qty_sort == "low_to_high":
+        order_by = "quantity ASC"
+
+    query += f" ORDER BY {order_by}"
+    products = conn.execute(query, params).fetchall()
 
     conn.close()
-    return render_template("view_products.html", products=products, search=search)
+    return render_template(
+        "view_products.html",
+        products=products,
+        search=search,
+        low_stock=low_stock,
+        price_sort=price_sort,
+        qty_sort=qty_sort
+    )
 
 # ── DELETE PRODUCT ──
 @app.route("/delete/<int:product_id>", methods=["POST"])
