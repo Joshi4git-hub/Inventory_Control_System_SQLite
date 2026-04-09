@@ -8,6 +8,10 @@
 </head>
 <body>
 
+<div class="dark-toggle-wrapper">
+  <button id="darkModeToggle" class="btn btn-sm btn-ghost" type="button">Dark mode</button>
+</div>
+
 {% if session.user %}
 <nav>
   <a href="{{ url_for('index') }}" class="nav-brand">
@@ -48,6 +52,49 @@
   Inventory Control System
 </footer>
 {% endif %}
+
+<script>
+  (function() {
+    const storageKey = "inventory-dark-mode";
+    const root = document.documentElement;
+    const toggle = document.getElementById("darkModeToggle");
+    const enable = document.getElementById("darkModeEnable");
+
+    function applyMode(mode) {
+      if (mode === "dark") {
+        root.classList.add("dark-mode");
+        if (toggle) toggle.textContent = "Light mode";
+      } else {
+        root.classList.remove("dark-mode");
+        if (toggle) toggle.textContent = "Dark mode";
+      }
+    }
+
+    function currentMode() {
+      return localStorage.getItem(storageKey) ||
+        (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    }
+
+    function setMode(mode) {
+      localStorage.setItem(storageKey, mode);
+      applyMode(mode);
+    }
+
+    if (toggle) {
+      toggle.addEventListener("click", function() {
+        setMode(root.classList.contains("dark-mode") ? "light" : "dark");
+      });
+    }
+
+    if (enable) {
+      enable.addEventListener("click", function() {
+        setMode("dark");
+      });
+    }
+
+    applyMode(currentMode());
+  })();
+</script>
 
 </body>
 </html>
