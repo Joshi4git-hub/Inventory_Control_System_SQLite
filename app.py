@@ -8,7 +8,8 @@ import os
 app = Flask(__name__)
 app.secret_key = "inventory_secret_key_2024"
 
-DATABASE = "inventory.db"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATABASE = os.path.join(BASE_DIR, "inventory.db")
 
 # ── Database Connection ──
 def get_db():
@@ -219,6 +220,7 @@ def add_product():
             flash("Product name and supplier are required.", "error")
             return redirect(url_for("add_product"))
 
+        price = price.replace(",", "").replace("₹", "").strip()
         try:
             quantity = int(quantity)
             price    = float(price)
@@ -296,6 +298,7 @@ def edit_product(product_id):
         price    = request.form.get("price", "0").strip()
         supplier = request.form.get("supplier", "").strip()
 
+        price = price.replace(",", "").replace("₹", "").strip()
         try:
             quantity = int(quantity)
             price    = float(price)
