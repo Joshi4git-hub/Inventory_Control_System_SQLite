@@ -43,7 +43,7 @@
                 {{ p.quantity }}
               </span>
             </td>
-            <td class="price-cell">₹{{ "{:,.2f}".format(p.price) }}</td>
+            <td class="price-cell">₹{{ p.price|inr }}</td>
           </tr>
           {% endfor %}
         </tbody>
