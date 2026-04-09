@@ -45,7 +45,7 @@
           <td style="color:var(--text-muted);font-size:.72rem;">{{ loop.index }}</td>
           <td class="name-cell">{{ p['name'] }}</td>
           <td>{{ p['supplier'] }}</td>
-          <td class="price-cell">₹{{ "%.2f"|format(p['price']) }}</td>
+          <td class="price-cell">₹{{ p['price']|inr }}</td>
           <td>{{ p['quantity'] }}</td>
           <td>
             {% if p['quantity'] > 15 %}
