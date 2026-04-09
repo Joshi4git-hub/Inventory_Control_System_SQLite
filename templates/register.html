@@ -1,47 +1,91 @@
 {% extends "base.html" %}
-{% block title %}Register — Inventory Control System{% endblock %}
+{% block title %}View Products — Inventory Control System{% endblock %}
 
 {% block content %}
-<div class="auth-wrapper">
-  <div class="auth-card">
+<div class="page-header">
+  <h1>Product Inventory</h1></div>
 
-    <div class="auth-header">
-      <div class="auth-logo">📦</div>
-      <h1>Create Account</h1>
-      <p>Register to manage your inventory</p>
-    </div>
 
-    <form method="POST" action="{{ url_for('register') }}">
-      <div class="form-group">
-        <label for="username">Username</label>
-        <input type="text" id="username" name="username" placeholder="Your name" required />
+<div class="card">
+  <div class="card-title">All Products</div>
+
+  <div class="search-row">
+    <form method="GET" action="{{ url_for('view_products') }}" style="display:flex;gap:.6rem;flex:1;">
+      <div class="search-wrap">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input type="text" name="q" value="{{ search }}" placeholder="Search by product name…" />
       </div>
-
-      <div class="form-group" style="margin-top:1rem;">
-        <label for="email">Email Address</label>
-        <input type="email" id="email" name="email" placeholder="you@example.com" required />
-      </div>
-
-      <div class="form-group" style="margin-top:1rem;">
-        <label for="password">Password</label>
-        <input type="password" id="password" name="password" placeholder="Min 6 characters" required />
-      </div>
-
-      <div class="form-group" style="margin-top:1rem;">
-        <label for="confirm">Confirm Password</label>
-        <input type="password" id="confirm" name="confirm" placeholder="Repeat password" required />
-      </div>
-
-      <button type="submit" class="btn btn-primary btn-full" style="margin-top:1.5rem;">
-        Create Account →
-      </button>
+      <button type="submit" class="btn btn-ghost btn-sm">Search</button>
+      {% if search %}
+        <a href="{{ url_for('view_products') }}" class="btn btn-ghost btn-sm">✕ Clear</a>
+      {% endif %}
     </form>
-
-    <p class="auth-footer">
-      Already have an account?
-      <a href="{{ url_for('login') }}">Login here</a>
-    </p>
-
+    <a href="{{ url_for('add_product') }}" class="btn btn-primary btn-sm">➕ Add Product</a>
   </div>
+
+  {% if products %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Product Name</th>
+          <th>Supplier</th>
+          <th>Price</th>
+          <th>Quantity</th>
+          <th>Stock Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in products %}
+        <tr>
+          <td style="color:var(--text-muted);font-size:.72rem;">{{ loop.index }}</td>
+          <td class="name-cell">{{ p['name'] }}</td>
+          <td>{{ p['supplier'] }}</td>
+          <td class="price-cell">₹{{ p['price']|inr }}</td>
+          <td>{{ p['quantity'] }}</td>
+          <td>
+            {% if p['quantity'] > 15 %}
+              <span class="badge badge-ok">In Stock</span>
+            {% elif p['quantity'] > 5 %}
+              <span class="badge badge-warn">Low Stock</span>
+            {% else %}
+              <span class="badge badge-low">Critical</span>
+            {% endif %}
+          </td>
+          <td>
+            <div class="btn-group">
+              <a href="{{ url_for('edit_product', product_id=p['id']) }}" class="btn btn-ghost btn-sm">✏ Edit</a>
+              <form method="POST" action="{{ url_for('delete_product', product_id=p['id']) }}"
+                    onsubmit="return confirm('Delete {{ p['name'] }}?')">
+                <button type="submit" class="btn btn-danger btn-sm">🗑</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <p style="font-size:.72rem;color:var(--text-muted);margin-top:1rem;">
+    Showing {{ products|length }} record{% if products|length != 1 %}s{% endif %}
+    {% if search %} matching "<strong style="color:var(--text-dim)">{{ search }}</strong>"{% endif %}
+  </p>
+
+  {% else %}
+  <div class="empty-state">
+    <h3>No products found</h3>
+    {% if search %}
+      <p>No results for "{{ search }}". <a href="{{ url_for('view_products') }}" style="color:var(--accent)">Clear search</a></p>
+    {% else %}
+      <p><a href="{{ url_for('add_product') }}" style="color:var(--accent)">Add your first product →</a></p>
+    {% endif %}
+  </div>
+  {% endif %}
+
 </div>
 {% endblock %}
