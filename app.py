@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from functools import wraps
+from decimal import Decimal, InvalidOperation
 import sqlite3
 import bcrypt
 import os
@@ -43,6 +44,38 @@ def init_db():
 
     conn.commit()
     conn.close()
+
+# ── Currency Formatting ──
+def format_inr(value):
+    if value is None:
+        return ""
+    try:
+        value = Decimal(value)
+    except (InvalidOperation, ValueError, TypeError):
+        try:
+            value = Decimal(str(value))
+        except (InvalidOperation, ValueError, TypeError):
+            return value
+
+    sign = "-" if value < 0 else ""
+    value = abs(value)
+    value = value.quantize(Decimal("0.01"))
+    integer_part, _, fraction = f"{value:.2f}".partition(".")
+
+    if len(integer_part) <= 3:
+        grouped = integer_part
+    else:
+        grouped = integer_part[-3:]
+        prefix = integer_part[:-3]
+        while len(prefix) > 2:
+            grouped = prefix[-2:] + "," + grouped
+            prefix = prefix[:-2]
+        if prefix:
+            grouped = prefix + "," + grouped
+
+    return f"{sign}{grouped}.{fraction}"
+
+app.jinja_env.filters["inr"] = format_inr
 
 # ── Login Required ──
 def login_required(f):
