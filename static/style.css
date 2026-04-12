@@ -268,6 +268,7 @@ td.name-cell {
 .badge-ok   { background: var(--success-bg); color: var(--success); }
 .badge-warn { background: var(--warn-bg);    color: var(--warn); }
 .badge-low  { background: var(--danger-bg);  color: var(--danger); }
+.badge-shipment { background: var(--accent-bg); color: var(--accent); }
 
 /* ── Buttons ── */
 .btn {
@@ -599,6 +600,40 @@ input::placeholder { color: var(--text-dim); }
 .empty-state a:hover,
 .text-link:hover {
   text-decoration: underline;
+}
+
+.shipment-summary {
+  font-size: .9rem;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+
+.shipment-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.25rem;
+  display: grid;
+  gap: .75rem;
+}
+
+.shipment-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: .9rem 1rem;
+  border-radius: var(--radius-sm);
+  background: var(--bg3);
+  color: var(--text);
+}
+
+.shipment-note {
+  font-weight: 600;
+  color: var(--accent-dk);
+}
+
+.shipment-product {
+  font-weight: 600;
+  color: var(--text);
 }
 
 /* ── Empty State ── */
