@@ -84,7 +84,29 @@
         </table>
       </div>
       {% else %}
-      <p style="color:var(--accent2);font-size:.82rem;">✔ All items are sufficiently stocked.</p>
+      <p class="shipment-summary">✔ All items are sufficiently stocked.</p>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <div class="card-title">Shipment Reminder</div>
+      {% if low_stock %}
+      <p class="shipment-summary">
+        {{ low_stock|length }} low-stock item{% if low_stock|length != 1 %}s{% endif %} need restocking.
+      </p>
+      <ul class="shipment-list">
+        {% for p in low_stock[:3] %}
+          {% set eta_days = 1 if p.quantity <= 5 else 2 %}
+          <li>
+            <span class="shipment-product">{{ p.name }}</span>
+            <span class="shipment-note">Arrives in {{ eta_days }} day{% if eta_days != 1 %}s{% endif %}</span>
+          </li>
+        {% endfor %}
+      </ul>
+      <a href="{{ url_for('shipments') }}" class="btn btn-primary btn-full">View Shipment Schedule</a>
+      {% else %}
+      <p class="shipment-summary">No low-stock shipments are needed right now.</p>
+      <a href="{{ url_for('view_products') }}" class="btn btn-ghost btn-full">Browse Products</a>
       {% endif %}
     </div>
   </div>
