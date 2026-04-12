@@ -357,8 +357,20 @@ def shipments():
 
     shipment_list = []
     for shipment in shipments:
-        arrival_date = date.fromisoformat(shipment["arrival_date"])
+        arrival_date_raw = shipment["arrival_date"]
+        try:
+            arrival_date = date.fromisoformat(arrival_date_raw)
+        except (TypeError, ValueError):
+            continue
+
         eta_days = (arrival_date - today).days
+        if eta_days > 0:
+            eta_text = f"Arrives in {eta_days} day{'' if eta_days == 1 else 's'}"
+        elif eta_days == 0:
+            eta_text = "Arrives today"
+        else:
+            eta_text = f"Arrived {-eta_days} day{'' if eta_days == -1 else 's'} ago"
+
         shipment_list.append({
             "id": shipment["product_id"],
             "name": shipment["name"],
@@ -366,7 +378,7 @@ def shipments():
             "supplier": shipment["supplier"],
             "eta_days": eta_days,
             "arrival_date": arrival_date.strftime("%b %d, %Y"),
-            "eta_text": f"Arrives in {eta_days} day{'' if eta_days == 1 else 's'}"
+            "eta_text": eta_text
         })
 
     return render_template("shipment.html", shipments=shipment_list)
