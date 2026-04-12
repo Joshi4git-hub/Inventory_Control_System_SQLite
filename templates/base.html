@@ -4,6 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>{% block title %}Inventory Control System{% endblock %}</title>
+  <script>
+    (function() {
+      try {
+        if (localStorage.getItem("inventory-dark-mode") === "dark") {
+          document.documentElement.classList.add("dark-mode");
+        }
+      } catch (err) {}
+    })();
+  </script>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
 </head>
 <body>
@@ -22,6 +31,7 @@
     <li><a href="{{ url_for('index') }}"         {% if request.endpoint=='index'         %}class="active"{% endif %}>Dashboard</a></li>
     <li><a href="{{ url_for('add_product') }}"   {% if request.endpoint=='add_product'   %}class="active"{% endif %}>Add Product</a></li>
     <li><a href="{{ url_for('view_products') }}" {% if request.endpoint=='view_products' %}class="active"{% endif %}>View Products</a></li>
+    <li><a href="{{ url_for('shipments') }}"     {% if request.endpoint=='shipments'     %}class="active"{% endif %}>Shipments</a></li>
   </ul>
   <div class="nav-user">
     <span class="user-badge">👤 {{ session.user }}</span>
