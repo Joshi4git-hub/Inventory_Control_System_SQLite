@@ -2,117 +2,6 @@
 {% block title %}View Products — Inventory Control System{% endblock %}
 
 {% block content %}
-<style>
-  .filter-modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,.5);
-    z-index: 1000;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .filter-modal.active {
-    display: flex;
-  }
-
-  .filter-panel {
-    background: var(--bg2);
-    border-radius: var(--radius);
-    padding: 2rem;
-    max-width: 700px;
-    width: 90%;
-    max-height: 80vh;
-    overflow-y: auto;
-    box-shadow: var(--shadow-lg);
-  }
-
-  .filter-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .filter-header h2 {
-    font-family: var(--font-head);
-    font-size: 1.3rem;
-    font-weight: 700;
-    margin: 0;
-  }
-
-  .filter-close {
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    cursor: pointer;
-    color: var(--text-muted);
-    padding: 0;
-  }
-
-  .filter-category {
-    margin-bottom: 2rem;
-  }
-
-  .filter-category-title {
-    font-size: .72rem;
-    font-weight: 700;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    margin-bottom: .8rem;
-  }
-
-  .filter-options {
-    display: flex;
-    flex-direction: column;
-    gap: .5rem;
-  }
-
-  .filter-option {
-    display: flex;
-    align-items: center;
-    gap: .5rem;
-  }
-
-  .filter-option input[type="checkbox"],
-  .filter-option input[type="radio"] {
-    cursor: pointer;
-    width: 18px;
-    height: 18px;
-    accent-color: var(--accent);
-  }
-
-  .filter-option label {
-    flex: 1;
-    margin: 0;
-    font-size: .85rem;
-    font-weight: 400;
-    text-transform: none;
-    letter-spacing: normal;
-    color: var(--text);
-    cursor: pointer;
-  }
-
-  .filter-actions {
-    display: flex;
-    gap: .75rem;
-    margin-top: 2rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid var(--border);
-  }
-
-  .filter-actions button {
-    flex: 1;
-  }
-</style>
-
 <div class="page-header">
   <h1>Product Inventory</h1></div>
 
@@ -121,7 +10,7 @@
   <div class="card-title">All Products</div>
 
   <div class="search-row">
-    <form id="searchForm" method="GET" action="{{ url_for('view_products') }}" style="display:flex;gap:.6rem;flex:1;">
+    <form id="searchForm" class="search-form" method="GET" action="{{ url_for('view_products') }}">
       <div class="search-wrap">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
@@ -200,7 +89,7 @@
 
         <div class="filter-actions">
           <button type="submit" class="btn btn-primary">Apply Filters</button>
-          <a href="{{ url_for('view_products') }}" class="btn btn-ghost" style="text-align:center;text-decoration:none;">Clear All</a>
+          <a href="{{ url_for('view_products') }}" class="btn btn-ghost btn-clear">Clear All</a>
         </div>
       </form>
     </div>
@@ -236,7 +125,7 @@
       <tbody>
         {% for p in products %}
         <tr>
-          <td style="color:var(--text-muted);font-size:.72rem;">{{ loop.index }}</td>
+          <td class="index-cell">{{ loop.index }}</td>
           <td class="name-cell">{{ p['name'] }}</td>
           <td>{{ p['supplier'] }}</td>
           <td class="price-cell">₹{{ p['price']|inr }}</td>
@@ -265,19 +154,19 @@
     </table>
   </div>
 
-  <p style="font-size:.72rem;color:var(--text-muted);margin-top:1rem;">
+  <p class="view-meta">
     Showing {{ products|length }} record{% if products|length != 1 %}s{% endif %}
-    {% if search %} matching "<strong style="color:var(--text-dim)">{{ search }}</strong>"{% endif %}
-    {% if low_stock %} with <strong style="color:var(--text-dim)">low stock</strong>{% endif %}
+    {% if search %} matching "<strong>{{ search }}</strong>"{% endif %}
+    {% if low_stock %} with <strong>low stock</strong>{% endif %}
   </p>
 
   {% else %}
   <div class="empty-state">
     <h3>No products found</h3>
     {% if search or low_stock or price_sort or qty_sort %}
-      <p>No results matching your filters. <a href="{{ url_for('view_products') }}" style="color:var(--accent)">Clear filters</a></p>
+      <p>No results matching your filters. <a href="{{ url_for('view_products') }}" class="text-link">Clear filters</a></p>
     {% else %}
-      <p><a href="{{ url_for('add_product') }}" style="color:var(--accent)">Add your first product →</a></p>
+      <p><a href="{{ url_for('add_product') }}" class="text-link">Add your first product →</a></p>
     {% endif %}
   </div>
   {% endif %}
