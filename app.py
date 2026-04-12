@@ -93,6 +93,9 @@ def format_inr(value):
 
 app.jinja_env.filters["inr"] = format_inr
 
+# Ensure database tables exist when the app is imported
+init_db()
+
 # ── Login Required ──
 def login_required(f):
     @wraps(f)
