@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from functools import wraps
 from decimal import Decimal, InvalidOperation
+from datetime import date, timedelta
 import sqlite3
 import bcrypt
 import os
@@ -39,6 +40,20 @@ def init_db():
             price    REAL    NOT NULL,
             supplier TEXT    NOT NULL,
             user_id  INTEGER NOT NULL,
+            FOREIGN KEY (user_id) REFERENCES users (id)
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS shipments (
+            id           INTEGER PRIMARY KEY AUTOINCREMENT,
+            product_id   INTEGER NOT NULL,
+            user_id      INTEGER NOT NULL,
+            order_qty    INTEGER NOT NULL,
+            order_date   TEXT    NOT NULL,
+            arrival_date TEXT    NOT NULL,
+            status       TEXT    NOT NULL CHECK(status IN ('pending', 'completed')),
+            FOREIGN KEY (product_id) REFERENCES products (id),
             FOREIGN KEY (user_id) REFERENCES users (id)
         )
     """)
@@ -91,9 +106,6 @@ def login_required(f):
 # ── REGISTER ──
 @app.route("/register", methods=["GET", "POST"])
 def register():
-    if "user" in session:
-        return redirect(url_for("index"))
-
     if request.method == "POST":
         username = request.form.get("username", "").strip()
         email    = request.form.get("email", "").strip()
@@ -287,6 +299,77 @@ def view_products():
         price_sort=price_sort,
         qty_sort=qty_sort
     )
+
+# ── SHIPMENTS ──
+@app.route("/shipments")
+@login_required
+def shipments():
+    user_id = session["user_id"]
+    conn = get_db()
+
+    today = date.today()
+
+    # Complete shipments that have arrived today or earlier
+    due_shipments = conn.execute(
+        "SELECT * FROM shipments WHERE user_id = ? AND status = 'pending' AND arrival_date <= ?",
+        (user_id, today.isoformat())
+    ).fetchall()
+    for shipment in due_shipments:
+        conn.execute(
+            "UPDATE products SET quantity = quantity + ? WHERE id = ? AND user_id = ?",
+            (shipment["order_qty"], shipment["product_id"], user_id)
+        )
+        conn.execute(
+            "UPDATE shipments SET status = 'completed' WHERE id = ?",
+            (shipment["id"],)
+        )
+
+    # Schedule shipments for any low-stock product that does not already have a pending shipment
+    low_stock = conn.execute(
+        "SELECT * FROM products WHERE user_id = ? AND quantity <= 15 ORDER BY quantity ASC",
+        (user_id,)
+    ).fetchall()
+
+    for product in low_stock:
+        pending = conn.execute(
+            "SELECT 1 FROM shipments WHERE product_id = ? AND user_id = ? AND status = 'pending'",
+            (product["id"], user_id)
+        ).fetchone()
+        if pending:
+            continue
+
+        eta_days = 1 if product["quantity"] <= 5 else 2
+        order_qty = 50
+        arrival_date = today + timedelta(days=eta_days)
+
+        conn.execute(
+            "INSERT INTO shipments (product_id, user_id, order_qty, order_date, arrival_date, status) VALUES (?, ?, ?, ?, ?, 'pending')",
+            (product["id"], user_id, order_qty, today.isoformat(), arrival_date.isoformat())
+        )
+
+    conn.commit()
+
+    shipments = conn.execute(
+        "SELECT s.*, p.name, p.supplier, p.quantity FROM shipments s JOIN products p ON p.id = s.product_id WHERE s.user_id = ? AND s.status = 'pending' ORDER BY s.arrival_date ASC",
+        (user_id,)
+    ).fetchall()
+    conn.close()
+
+    shipment_list = []
+    for shipment in shipments:
+        arrival_date = date.fromisoformat(shipment["arrival_date"])
+        eta_days = (arrival_date - today).days
+        shipment_list.append({
+            "id": shipment["product_id"],
+            "name": shipment["name"],
+            "quantity": shipment["quantity"],
+            "supplier": shipment["supplier"],
+            "eta_days": eta_days,
+            "arrival_date": arrival_date.strftime("%b %d, %Y"),
+            "eta_text": f"Arrives in {eta_days} day{'' if eta_days == 1 else 's'}"
+        })
+
+    return render_template("shipment.html", shipments=shipment_list)
 
 # ── DELETE PRODUCT ──
 @app.route("/delete/<int:product_id>", methods=["POST"])
