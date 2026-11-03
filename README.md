@@ -1,4 +1,4 @@
-# StockPilot 📦🛒
+# Inventory Control System 📦🛒
 
 A modern, multi-user **Inventory Control System** built with **Flask** and **SQLite**. Manage your products, monitor stock levels in real time, and let the system automatically schedule restocking shipments — all through a clean, responsive UI with dark mode support.
 
